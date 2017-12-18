@@ -26,11 +26,17 @@ func GetBlockArr(path string,blockSize int64) []Block{
 	blocks := make([]Block, blockNum)
 	//TODO int ?
 	blockNum2 := int(blockNum)
+	order := 0
 	for i := 0; i < blockNum2; i ++{
-		blocks[i] = &Block{Offset:  i * blockNum2,Blength: blockNum2,Order:i}
+		blocks[i] = *&Block{Offset:  i * blockNum2,Blength: blockNum2,Order:order}
+		order ++
 	}
 
-	return nil
+	order ++
+
+	blocks[blockNum + 1] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order}
+
+	return blocks
 }
 
 func divFile(size int64,path string,packet int64)  (int64,int64){
