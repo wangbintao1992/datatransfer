@@ -1,13 +1,20 @@
 package main
 
-import "net"
+import (
+	"os"
+	"fmt"
+	"net"
+)
 
 func main() {
-	conn, _ := net.Dial("tcp", "localhost:8080")
 
-	bytes := make([]byte, 2)
 
-	bytes[0] = 22
-	bytes[1] = 99
-	conn.Write(bytes)
+}
+func readPart(offset int64, file *os.File,conn net.Conn) {
+	fmt.Println("=========")
+	buf := make([]byte, 100)
+	file.ReadAt(buf, offset)
+
+	//conn.Write(buf)
+	fmt.Println(string(buf),"===")
 }

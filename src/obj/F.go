@@ -10,33 +10,22 @@ import (
 func main() {
 	conn, _ := net.Listen("tcp", "localhost:8080")
 
-	accept, _ := conn.Accept()
-
-	i := make([]byte, 1)
-
-	var t = 0
 	for{
-		if t == 2{
-			break
-		}
-		accept.Read(i)
-		fmt.Println(i[0])
-		t ++
-
-		}
+		accept, _ := conn.Accept()
+		fmt.Println("come in")
+		go read2(accept)
+	}
 }
+func read2(accept net.Conn) {
+	i := make([]byte, 1000)
+	accept.Read(i)
+	fmt.Println(string(i))
 
+	accept.Read(i)
+	fmt.Println(string(i))
 
-func (f *F) Say(){
-	fmt.Println(f.Name)
-}
-
-type F struct {
-	Name string
-}
-
-type C struct {
-	*F
+	accept.Read(i)
+	fmt.Println(string(i))
 }
 
 func intToByte(d int32) []byte{
