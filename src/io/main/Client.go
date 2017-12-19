@@ -17,11 +17,17 @@ func main() {
 	fmt.Println("inputPath:",path)
 	conn, _ := net.Dial("tcp", "localhost:8080")
 
+	util.SetTCPOption(conn)
+
 	//TODO pool
 	//TODO asych timeout
-	sendData(path,conn)
+	sendData(path, conn)
+
+	defer conn.Close()
+	//TODO when stop?
 	time.Sleep(30e9)
 }
+
 
 func sendData(path string, conn net.Conn){
 	file, _ := os.Open(path)
@@ -36,12 +42,10 @@ func sendData(path string, conn net.Conn){
 	fmt.Println("write start")
 	for i := 0; i < len(blocks); i ++ {
 		msg := getPacket(file, blocks[i])
-
 		n, _ := conn.Write(msg)
 
 		fmt.Println("write:", n, "write...")
 	}
-
 	endCalcTime()
 }
 //TODO common

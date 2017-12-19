@@ -62,3 +62,15 @@ type Head struct {
 	Name string
 	Path os.File
 }
+
+type HeadIndex []Head
+
+func(h HeadIndex)Len() int{
+	return len(h)
+}
+func(h HeadIndex) Less(i, j int) bool{
+	return h[i].Order < h[j].Order
+}
+func(h HeadIndex)Swap(i, j int){
+	h[i],h[j] = h[j],h[i]
+}

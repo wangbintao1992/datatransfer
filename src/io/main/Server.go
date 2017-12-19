@@ -5,18 +5,28 @@ import (
 	"fmt"
 	"os"
 	"io/util"
+	"sort"
+	"io"
+	"io/ioutil"
+	"bufio"
+	"bytes"
 )
 var path = "D://tmp"
 var bufSize = 20240
 var indexFile = make(map[string]util.Head,10)
 
 func main() {
-	conn, e := net.Listen("tcp", "localhost:8080")
-	fmt.Println(e)
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", "localhost:8080")
 
-	for{
-		accept, _ := conn.Accept()
-		handle(accept)
+	fmt.Println(err)
+
+	server, e := net.ListenTCP("tcp", tcpAddr)
+
+	fmt.Println(e)
+	for {
+		conn, _ := server.AcceptTCP()
+		util.SetTCPOption(conn)
+		handle(conn)
 	}
 }
 func handle(accept net.Conn) {
@@ -33,7 +43,11 @@ func readPacket(conn net.Conn) {
 
 	for {
 		fmt.Println("receiveing ...")
-		head, _ := readHead(conn)
+		head, n := readHead(conn)
+
+		if n == 0{
+			break
+		}
 
 		//TODO index to large ?
 		addToIndex(head)
@@ -43,8 +57,19 @@ func readPacket(conn net.Conn) {
 		writeBody(conn, head)
 	}
 	//TODO check
-
+	mergeFile()
 	fmt.Println("finsh")
+}
+func mergeFile() {
+
+	index := make([]util.Head, len(indexFile))
+	for _,v := range indexFile {
+		index = append(index, v)
+	}
+
+	sort.Sort(util.HeadIndex(index))
+	for _,v := range index{
+	}
 }
 
 func writeBody(conn net.Conn,h *util.Head) {
@@ -84,6 +109,7 @@ func readHead(accept net.Conn) (h *util.Head, num int){
 
 	if e != nil{
 		fmt.Println("read type err",e)
+		return nil,0
 	}
 
 	//TODO tmp index

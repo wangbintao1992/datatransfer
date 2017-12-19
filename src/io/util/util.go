@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/binary"
+	"net"
 )
 
 var(
@@ -17,6 +18,12 @@ func GetSpace(space int) []byte{
 	}
 
 	return t
+}
+
+func SetTCPOption(conn net.Conn) {
+	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetWriteBuffer(300000)
+	tcpConn.SetReadBuffer(300000)
 }
 
 func ByteToInt32(d []byte) int32{
