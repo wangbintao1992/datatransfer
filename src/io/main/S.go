@@ -3,13 +3,11 @@ package main
 import (
 	"net"
 	"fmt"
-	"bytes"
 	"os"
-	"encoding/json"
 	"io/util"
 )
 var path = "D://tmp"
-var bufSize int32 = 20240
+var bufSize = 20240
 var indexFile = make(map[string]util.Head,10)
 
 func main() {
@@ -27,23 +25,18 @@ func handle(accept net.Conn) {
 
 	readPacket(accept)
 }
-//head[x,x,x,x][data]
-// type length (max int32)
+
 func readPacket(conn net.Conn) {
 	fmt.Println("start receive")
 	//TODO fix buf @link length
 	//TODO path
-	path += "//data.pdf"
 
 	for {
 		fmt.Println("receiveing ...")
-		head, hnum := readHead(conn)
+		head, _ := readHead(conn)
 
-		if hnum == 0{
-			break
-		}
-
-		getFile(head)
+		//TODO index to large ?
+		addToIndex(head)
 
 		fmt.Println("body length",head.Length)
 
@@ -53,7 +46,50 @@ func readPacket(conn net.Conn) {
 
 	fmt.Println("finsh")
 }
-func getFile(head *util.Head){
+
+func writeBody(conn net.Conn,h *util.Head) {
+	var length = h.Length
+	var file = h.Path
+
+	var part []byte
+	var readNum int
+	for {
+		part,readNum,length = getPartBody(length, conn)
+
+		if readNum == 0{
+			break
+		}
+
+		file.Write(part)
+		file.Sync()
+	}
+}
+func getPartBody(length int, conn net.Conn) ([]byte,int,int){
+	buf := make([]byte, length)
+	num, _ := conn.Read(buf)
+	fmt.Println("read num:", num)
+
+	remain := length - num
+
+	if remain != 0 {
+		length = remain
+		fmt.Println("resize buf:", remain)
+	}
+
+	return buf[:num],num,remain
+}
+func readHead(accept net.Conn) (h *util.Head, num int){
+	t := make([]byte,util.HeadSize)
+	n, e := accept.Read(t)
+
+	if e != nil{
+		fmt.Println("read type err",e)
+	}
+
+	//TODO tmp index
+	return util.DecodeHead(t),n
+}
+func addToIndex(head *util.Head){
 
 	if h ,ok:= indexFile[head.Hash]; ok{
 		head.Path = h.Path
@@ -62,52 +98,4 @@ func getFile(head *util.Head){
 		head.Path = *f2
 		indexFile[head.Hash] = *head
 	}
-}
-func writeBody(conn net.Conn,h *util.Head) {
-	var length = h.Length
-	var file = h.Path
-	for {
-		buf := make([]byte, bufSize)
-		num, _ := conn.Read(buf)
-
-		fmt.Println("read num:", num)
-		if num == 0 {
-			break
-		}
-
-		file.Write(buf[:num])
-		file.Sync()
-
-		if remain := length - int32(num); remain != 0 {
-			bufSize = remain
-			length = remain
-			fmt.Println("resize buf:", remain)
-		} else {
-			break
-		}
-	}
-}
-
-func readHead(accept net.Conn) (h *util.Head, num int32){
-	t := make([]byte,util.HeadSize)
-	n, e := accept.Read(t)
-
-	if e != nil{
-		fmt.Println("read type err",e)
-	}
-
-	i := new(util.Head)
-
-	right := bytes.TrimRight(t, "\x00")
-
-	fmt.Println("head json",string(right))
-	e2 := json.Unmarshal(right, &i)
-
-	if e2 != nil{
-		fmt.Println(e2)
-	}
-
-	//TODO tmp index
-
-	return i,int32(n)
 }

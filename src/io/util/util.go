@@ -26,3 +26,9 @@ func ByteToInt32(d []byte) int32{
 
 	return r
 }
+
+func int32ToByte(l int32) []byte{
+	buffer := bytes.NewBuffer([]byte{})
+	binary.Write(buffer,binary.BigEndian,l)
+	return buffer.Bytes()
+}

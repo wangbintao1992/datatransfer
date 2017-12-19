@@ -3,13 +3,19 @@ package util
 import (
 	"fmt"
 	"os"
-	"strconv"
+	"path"
 )
+
+func GetFileName(p string) string{
+	return path.Base(p)
+}
 
 func GetBlockArr(path string,blockSize int64) []Block{
 	fmt.Println("分块大小byte:",blockSize)
 	fmt.Println("源文件路径:" + path)
 
+	fileName := GetFileName(path)
+	fmt.Println("文件名:" + fileName)
 	info, e := os.Stat(path)
 
 	if e != nil{
@@ -20,21 +26,21 @@ func GetBlockArr(path string,blockSize int64) []Block{
 
 	blockNum, remain := divFile(size, path, blockSize)
 
-	fmt.Println("分块:" + strconv.FormatInt(blockNum,10))
-	fmt.Println("剩余:" + strconv.FormatInt(remain,10))
+	fmt.Println("分块:",blockNum)
+	fmt.Println("剩余:",remain)
 
-	blocks := make([]Block, blockNum)
+	blocks := make([]Block, blockNum + 1)
 	//TODO int ?
 	blockNum2 := int(blockNum)
+	bs := int(blockSize)
 	order := 0
 	for i := 0; i < blockNum2; i ++{
-		blocks[i] = *&Block{Offset:  i * blockNum2,Blength: blockNum2,Order:order}
+		blocks[i] = *&Block{Offset:  i * bs,Blength: bs,Order:order,Name:fileName}
 		order ++
 	}
 
-	order ++
-
-	blocks[blockNum + 1] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order}
+	fmt.Println(cap(blocks))
+	blocks[blockNum] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order,Name:fileName}
 
 	return blocks
 }

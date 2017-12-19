@@ -4,15 +4,17 @@ import (
 	"crypto/sha1"
 	"bytes"
 	"strconv"
+	"fmt"
 )
 
 type Block struct {
 	Offset  int
 	Blength int
 	Order   int
+	Name string
 }
 
-func (this *Block) getHash() string{
+func (this *Block) GetHash() string{
 	buffer := bytes.Buffer{}
 	buffer.WriteString(strconv.Itoa(this.Offset))
 	buffer.WriteString("_")
@@ -22,5 +24,5 @@ func (this *Block) getHash() string{
 
 	t := sha1.New()
 	t.Write(buffer.Bytes())
-	return string(t.Sum(nil))
+	return fmt.Sprintf("%x",(t.Sum(nil)))
 }

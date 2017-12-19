@@ -2,17 +2,14 @@ package main
 
 import (
 	"net"
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"time"
 	"os"
 	"flag"
-	"encoding/json"
 	"io/util"
-	"strconv"
 )
 
+var startTime time.Time
 func main() {
 	flag.Parse()
 
@@ -26,69 +23,61 @@ func main() {
 	time.Sleep(30e9)
 }
 
-
-
 func sendData(path string, conn net.Conn){
 	file, _ := os.Open(path)
 
 	defer file.Close()
 
-	writePacket(file,conn)
+	//TODO blockSize?
+	blocks := getBlocks(path, 300000)
 
-}
-func writePacket(file *os.File,conn net.Conn) {
-	buf := make([]byte, 30000)
+	startCalcTime()
+
 	fmt.Println("write start")
+	for i := 0; i < len(blocks); i ++ {
+		msg := getPacket(file, blocks[i])
 
-	order := 0
-	for{
-		n, _ := file.Read(buf)
-		if n == 0{
-			break
-		}
+		n, _ := conn.Write(msg)
 
-		head := getHead(order, int32(n),key,"data.pdf")
-
-		packet := getPacket(head, buf[0:n])
-
-		w , _ := conn.Write(packet)
-		fmt.Println("write:",w)
-		fmt.Println("writing...")
+		fmt.Println("write:", n, "write...")
 	}
 
-	fmt.Println("write end")
-
+	endCalcTime()
 }
-func getHead(o int, l int32, h string, n string) []byte {
-	head := &util.Head{
-		Order:  o,
-		Length: l,
-		Name:   n,
-		Hash:   h}
-	marshal, e := json.Marshal(head)
+//TODO common
+func endCalcTime() {
+	since := time.Since(startTime)
+	fmt.Println("用时 s", since)
+}
+//TODO common
+func startCalcTime() {
+	startTime = time.Now()
+}
+
+func getBlocks(path string,blockSize int64) []util.Block{
+	return util.GetBlockArr(path,blockSize)
+}
+
+func getPacket(file *os.File,b util.Block) []byte{
+	buf := make([]byte, b.Blength)
+
+	n, e := readFile(file, buf,b)
 
 	if e != nil{
 		fmt.Println(e)
 	}
+	head := getHead(b)
 
-	fmt.Println("head json",string(marshal))
-
-	if space := util.HeadSize - len(marshal); space > 0{
-		marshal = append(marshal,util.GetSpace(space)...)
-	}
-
-	return marshal
+	if head != nil{}
+	return mergePacket(head, buf[:n])
 }
-func getPacket(head []byte, body []byte) []byte{
+
+func readFile(file *os.File,buf []byte,block util.Block)(int,error) {
+	return file.ReadAt(buf,int64(block.Offset))
+}
+func getHead(b util.Block) []byte {
+	return util.EncodeHead(b)
+}
+func mergePacket(head []byte, body []byte) []byte{
 	return append(head, body...)
-}
-
-
-//[ [x] [x,x,x,x]]
-
-
-func int32ToByte(l int32) []byte{
-	buffer := bytes.NewBuffer([]byte{})
-	binary.Write(buffer,binary.BigEndian,l)
-	return buffer.Bytes()
 }
