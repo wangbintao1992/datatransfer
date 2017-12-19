@@ -68,8 +68,24 @@ func mergeFile() {
 	}
 
 	sort.Sort(util.HeadIndex(index))
+
+	f, _ := os.OpenFile(head.GetFilePath(path), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+
+	write := bufio.NewWriter(f)
 	for _,v := range index{
+		io.Copy(write,&v.Path)
 	}
+}
+func clean(){
+
+	for k,v := range indexFile{
+		fmt.Println("delete index:",k)
+		go deleteFile(v.Path)
+	}
+}
+
+func deleteFile(f os.File){
+
 }
 
 func writeBody(conn net.Conn,h *util.Head) {

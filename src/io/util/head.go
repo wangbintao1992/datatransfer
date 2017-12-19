@@ -45,6 +45,10 @@ func DecodeHead(data []byte) *Head{
 	return i
 }
 
+func (this *Head) GetFilePath(s string) string{
+	return path.Join(s,this.Name)
+}
+
 //example path = data.pdf_1.tmp
 func (this *Head) GetTmpFilePath(s string) string{
 	buffer := bytes.Buffer{}
