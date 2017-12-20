@@ -16,6 +16,8 @@ var indexFile = make(map[string]util.Head,10)
 var once sync.Once
 var tmpPath string
 func main() {
+	var lock sync.WaitGroup
+
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", "localhost:8080")
 
 	fmt.Println(err)
@@ -25,49 +27,43 @@ func main() {
 	for {
 		conn, _ := server.AcceptTCP()
 		util.SetTCPOption(conn)
-		go handle(conn)
+		go handle(conn,lock)
 	}
 
 	//TODO md5 check
-	//TODO wait
+	lock.Wait()
 	mergeFile()
-
 	clean()
 	fmt.Println("finash")
 }
-func handle(accept net.Conn) {
+func handle(accept net.Conn,lock sync.WaitGroup) {
 
 	fmt.Println("reuqest come in")
 
-	readPacket(accept)
+	readPacket(accept,lock)
 }
 
-func readPacket(conn net.Conn) {
+func readPacket(conn net.Conn,lock sync.WaitGroup) {
 	fmt.Println("start receive")
 	//TODO fix buf @link length
 	//TODO p
+	lock.Add(1)
+	fmt.Println("receiveing ...")
+	head, _ := readHead(conn)
 
-	for {
-		fmt.Println("receiveing ...")
-		head, n := readHead(conn)
+	once.Do(func() {
+		tmpPath = path.Join(p,"\\",head.Name + "tmp")
+		os.Mkdir(tmpPath,0666)
+	})
 
-		once.Do(func() {
-			tmpPath = path.Join(p,"\\",head.Name + "tmp")
-			os.Mkdir(tmpPath,0666)
-		})
+	//TODO index to large ?
+	addToIndex(head)
 
-		if n == 0{
-			break
-		}
+	fmt.Println("body length",head.Length)
 
-		//TODO index to large ?
-		addToIndex(head)
+	writeBody(conn, head)
 
-		fmt.Println("body length",head.Length)
-
-		writeBody(conn, head)
-	}
-
+	lock.Done()
 }
 func mergeFile() {
 	fmt.Println("merge ...")
@@ -116,9 +112,10 @@ func writeBody(conn net.Conn,h *util.Head) {
 
 	part := getPartBody(length, conn)
 
-	file.Write(part)
+	file.Write(util.GzipDecode(part))
 	file.Sync()
 }
+
 func getPartBody(length int, conn net.Conn) ([]byte){
 	buf := make([]byte, length)
 

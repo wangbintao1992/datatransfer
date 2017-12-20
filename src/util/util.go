@@ -4,12 +4,27 @@ import (
 	"bytes"
 	"encoding/binary"
 	"net"
+	"compress/gzip"
+	"io/ioutil"
 )
 
 var(
 	HeadSize  = 150
 )
 
+func GzipEncode(data []byte) []byte{
+	buf := bytes.Buffer{}
+	writer := gzip.NewWriter(&buf)
+	writer.Write(data)
+	return buf.Bytes()
+}
+
+func GzipDecode(data []byte) []byte{
+	buf := bytes.Buffer{}
+	r, _ := gzip.NewReader(&buf)
+	ioutil.ReadAll(r)
+	return buf.Bytes()
+}
 //TODO deprecated
 func GetSpace(space int) []byte{
 	t := make([]byte, space)

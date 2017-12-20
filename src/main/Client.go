@@ -70,7 +70,6 @@ func getPacket(file *os.File,b util.Block) []byte{
 	}
 	head := getHead(b)
 
-	if head != nil{}
 	return mergePacket(head, buf[:n])
 }
 
