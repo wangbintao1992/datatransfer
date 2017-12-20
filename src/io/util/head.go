@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"strconv"
-	"os"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -56,7 +55,7 @@ func (this *Head) GetTmpFilePath(s string) string{
 	buffer.WriteString("_")
 	buffer.WriteString(strconv.Itoa(this.Order))
 	buffer.WriteString(".tmp")
-	return path.Join(s,buffer.String())
+	return path.Join(s,"tmp",buffer.String())
 }
 
 type Head struct {
@@ -64,7 +63,7 @@ type Head struct {
 	Length int
 	Hash string
 	Name string
-	Path os.File
+	Path string
 }
 
 type HeadIndex []Head
