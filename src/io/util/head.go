@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"os"
 )
 
 func EncodeHead(b Block) []byte{
@@ -55,7 +56,8 @@ func (this *Head) GetTmpFilePath(s string) string{
 	buffer.WriteString("_")
 	buffer.WriteString(strconv.Itoa(this.Order))
 	buffer.WriteString(".tmp")
-	return path.Join(s,"tmp",buffer.String())
+
+	return path.Join(s,this.Name + "tmp",buffer.String())
 }
 
 type Head struct {
@@ -63,7 +65,7 @@ type Head struct {
 	Length int
 	Hash string
 	Name string
-	Path string
+	Path *os.File
 }
 
 type HeadIndex []Head

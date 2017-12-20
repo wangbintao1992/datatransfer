@@ -6,14 +6,15 @@ import (
 	"os"
 	"io/util"
 	"sort"
-	"time"
 	"bufio"
 	"io"
+	"sync"
+	"path"
 )
-var path = "D://tmp"
-var bufSize = 20240
+var p = "D://tmp"
 var indexFile = make(map[string]util.Head,10)
-
+var once sync.Once
+var tmpPath string
 func main() {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", "localhost:8080")
 
@@ -37,12 +38,17 @@ func handle(accept net.Conn) {
 func readPacket(conn net.Conn) {
 	fmt.Println("start receive")
 	//TODO fix buf @link length
-	//TODO path
+	//TODO p
 
 	for {
 		fmt.Println("receiveing ...")
 		head, n := readHead(conn)
 
+		once.Do(func() {
+			tmpPath = path.Join(p,"\\",head.Name + "tmp")
+			os.Mkdir(tmpPath,0666)
+		})
+		
 		if n == 0{
 			break
 		}
@@ -54,9 +60,10 @@ func readPacket(conn net.Conn) {
 
 		writeBody(conn, head)
 	}
-	//TODO check
+	//TODO md5 check
 	mergeFile()
-	time.Sleep(10e9)
+
+	clean()
 	fmt.Println("finash")
 }
 func mergeFile() {
@@ -71,70 +78,57 @@ func mergeFile() {
 
 	writer := getFinalFile(index[0])
 
+	defer writer.Close()
+
+	bufWrite := bufio.NewWriter(writer)
+
 	for _, v := range index {
-		reader := getReader(v.Path)
-		io.Copy(writer,reader)
-		writer.Flush()
+		//!important reset read pointer
+		v.Path.Seek(0,io.SeekStart)
+		reader := bufio.NewReader(v.Path)
+		io.Copy(bufWrite,reader)
+		bufWrite.Flush()
+
+		v.Path.Close()
 	}
 
 	fmt.Println("merge finash...")
 }
-func getReader(s string) *bufio.Reader{
-	file, _ := os.Open(s)
-	return bufio.NewReader(file)
-}
-func getFinalFile(h util.Head) *bufio.Writer{
-	f, _ := os.OpenFile(h.GetFilePath(path), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	return bufio.NewWriter(f)
+func getFinalFile(h util.Head) *os.File{
+	f, _ := os.OpenFile(h.GetFilePath(p), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	return f
 }
 func clean(){
-	for k,_ := range indexFile{
-		fmt.Println("delete index:",k)
+	fmt.Println("清理临时文件")
+	r := os.RemoveAll(tmpPath)
+	if r != nil{
+		fmt.Println(r)
 	}
-}
-
-func deleteFile(f os.File){
-
+	fmt.Println("清理临时文件结束")
 }
 
 func writeBody(conn net.Conn,h *util.Head) {
 	var length = h.Length
-	var path = h.Path
+	var file = h.Path
 
-	write := getWrite(path)
+	part := getPartBody(length, conn)
 
-	var part []byte
-	var readNum int
-	for {
-		part,readNum,length = getPartBody(length, conn)
-
-		if readNum == 0{
-			break
-		}
-
-		write.Write(part)
-		write.Flush()
-	}
+	file.Write(part)
+	file.Sync()
 }
-func getWrite(s string) *bufio.Writer{
-	file, _ := os.OpenFile(s,os.O_CREATE | os.O_RDWR|os.O_APPEND, 0666)
-	return bufio.NewWriter(file)
-}
-func getPartBody(length int, conn net.Conn) ([]byte,int,int){
+func getPartBody(length int, conn net.Conn) ([]byte){
 	buf := make([]byte, length)
 
 	num, _ := conn.Read(buf)
 
 	fmt.Println("read num:", num)
 
-	remain := length - num
-
-	if remain != 0 {
-		length = remain
-		fmt.Println("resize buf:", remain)
+	//TODO recover
+	if length != num{
+		panic("数据包异常")
 	}
 
-	return buf[:num],num,remain
+	return buf[:num]
 }
 func readHead(accept net.Conn) (h *util.Head, num int){
 	t := make([]byte,util.HeadSize)
@@ -155,7 +149,8 @@ func addToIndex(head *util.Head){
 		fmt.Println("重复读 err")
 		head.Path = h.Path
 	} else {
-		head.Path = head.GetTmpFilePath(path)
+		file, _ := os.OpenFile(head.GetTmpFilePath(p),os.O_CREATE | os.O_RDWR|os.O_APPEND, 0666)
+		head.Path = file
 		indexFile[head.Hash] = *head
 	}
 }

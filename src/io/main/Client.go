@@ -23,9 +23,7 @@ func main() {
 	//TODO asych timeout
 	sendData(path, conn)
 
-	defer conn.Close()
-	//TODO when stop?
-	time.Sleep(30e9)
+	conn.Close()
 }
 
 
@@ -35,7 +33,7 @@ func sendData(path string, conn net.Conn){
 	defer file.Close()
 
 	//TODO blockSize?
-	blocks := getBlocks(path, 300000)
+	blocks := getBlocks(path, 30000)
 
 	startCalcTime()
 

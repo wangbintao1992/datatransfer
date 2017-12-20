@@ -4,32 +4,35 @@ import (
 	"os"
 	"fmt"
 	"net"
-	"bufio"
+	"compress/gzip"
+	"bytes"
+	"io/ioutil"
 )
 
 func main() {
-	bytes := make([]byte, 10)
-	file, _ := os.OpenFile("D://tmp.log",os.O_CREATE | os.O_RDWR|os.O_APPEND, 0666)
 
-	writer := bufio.NewWriter(file)
+	i := make([]byte, 5)
 
-	writer.
-	file.Read(bytes)
+	i[0] = 1
+	i[1] = 2
+	i[2] = 3
+	i[3] = 4
+	i[4] = 5
+	fmt.Println(i)
+		fmt.Println("raw size:", len(i))
 
-	fmt.Println(1,bytes)
-	fmt.Println(2,string(bytes))
+	var b bytes.Buffer
+	w := gzip.NewWriter(&b)
+	defer w.Close()
+	w.Write(i)
+	w.Flush()
+	fmt.Println("gzip size:", len(b.Bytes()))
 
-	file.Write([]byte("why why why"))
-	file.Sync()
+	r, _ := gzip.NewReader(&b)
+	defer r.Close()
+	undatas, _ := ioutil.ReadAll(r)
+	fmt.Println("ungzip size:", len(undatas),b.Bytes())
 
-	file.Write([]byte("222222"))
-	file.Sync()
-
-	bytes2 := make([]byte, 10)
-	_, err := file.Read(bytes2)
-	fmt.Println(err)
-	fmt.Println(3,bytes2)
-	fmt.Println(4,string(bytes2))
 }
 func readPart(offset int64, file *os.File,conn net.Conn) {
 	fmt.Println("=========")

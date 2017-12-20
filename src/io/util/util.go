@@ -19,9 +19,10 @@ func GetSpace(space int) []byte{
 
 	return t
 }
-
+//TODO buf size
 func SetTCPOption(conn net.Conn) {
 	tcpConn := conn.(*net.TCPConn)
+	tcpConn.SetNoDelay(false)
 	tcpConn.SetWriteBuffer(300000)
 	tcpConn.SetReadBuffer(300000)
 }
