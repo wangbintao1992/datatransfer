@@ -6,7 +6,7 @@ import (
 	"time"
 	"os"
 	"flag"
-	"io/util"
+	"util"
 )
 
 var startTime time.Time

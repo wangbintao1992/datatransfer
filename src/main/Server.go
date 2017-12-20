@@ -4,7 +4,7 @@ import (
 	"net"
 	"fmt"
 	"os"
-	"io/util"
+	"util"
 	"sort"
 	"bufio"
 	"io"
