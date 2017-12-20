@@ -25,8 +25,15 @@ func main() {
 	for {
 		conn, _ := server.AcceptTCP()
 		util.SetTCPOption(conn)
-		handle(conn)
+		go handle(conn)
 	}
+
+	//TODO md5 check
+	//TODO wait
+	mergeFile()
+
+	clean()
+	fmt.Println("finash")
 }
 func handle(accept net.Conn) {
 
@@ -48,7 +55,7 @@ func readPacket(conn net.Conn) {
 			tmpPath = path.Join(p,"\\",head.Name + "tmp")
 			os.Mkdir(tmpPath,0666)
 		})
-		
+
 		if n == 0{
 			break
 		}
@@ -60,11 +67,7 @@ func readPacket(conn net.Conn) {
 
 		writeBody(conn, head)
 	}
-	//TODO md5 check
-	mergeFile()
 
-	clean()
-	fmt.Println("finash")
 }
 func mergeFile() {
 	fmt.Println("merge ...")
