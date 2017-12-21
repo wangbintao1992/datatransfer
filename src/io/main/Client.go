@@ -23,6 +23,7 @@ func main() {
 	//TODO asych timeout
 	sendData(path, conn)
 
+	time.Sleep(time.Second * 3)
 	conn.Close()
 }
 
@@ -30,21 +31,27 @@ func main() {
 func sendData(path string, conn net.Conn){
 	file, _ := os.Open(path)
 
-	defer file.Close()
-
 	//TODO blockSize?
-	blocks := getBlocks(path, 30000)
+	blocks := getBlocks(path, 300000)
 
 	startCalcTime()
 
 	fmt.Println("write start")
-	for i := 0; i < len(blocks); i ++ {
-		msg := getPacket(file, blocks[i])
-		n, _ := conn.Write(msg)
 
-		fmt.Println("write:", n, "write...")
+	//TODO 非常重要，待解决，socket 缓冲区可能第一次发包，不满
+
+	for i := 0; i < len(blocks); i ++ {
+		go writePacket(file, blocks, i, conn)
 	}
 	endCalcTime()
+}
+func writePacket(file *os.File, blocks []util.Block, i int, conn net.Conn) {
+	msg := getPacket(file, blocks[i])
+	n, e := conn.Write(msg)
+	if e != nil {
+		fmt.Println(e)
+	}
+	fmt.Println("write:", n, "write...")
 }
 //TODO common
 func endCalcTime() {

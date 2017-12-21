@@ -25,14 +25,16 @@ func main() {
 	for {
 		conn, _ := server.AcceptTCP()
 		util.SetTCPOption(conn)
-		go handle(conn)
+		handle(conn)
+
+		mergeFile()
+
+		clean()
 	}
 
 	//TODO md5 check
 	//TODO wait
-	mergeFile()
 
-	clean()
 	fmt.Println("finash")
 }
 func handle(accept net.Conn) {
@@ -41,11 +43,8 @@ func handle(accept net.Conn) {
 
 	readPacket(accept)
 }
-
+//不同协程 并行读，所以每读一包，包含包头包体
 func readPacket(conn net.Conn) {
-	fmt.Println("start receive")
-	//TODO fix buf @link length
-	//TODO p
 
 	for {
 		fmt.Println("receiveing ...")
@@ -67,7 +66,47 @@ func readPacket(conn net.Conn) {
 
 		writeBody(conn, head)
 	}
+}
+func writeBody(conn net.Conn,h *util.Head) {
+	var length = h.Length
+	var file = h.Path
 
+	tmpBuf := make([]byte, 0)
+	for{
+		num := 0
+		data,num,remain := getPartBody(length, conn)
+
+		if num == 0{
+			break
+		}
+
+		length = remain
+
+		tmpBuf = append(tmpBuf, data...)
+	}
+	go flushToDisk(file, tmpBuf)
+}
+func flushToDisk(file *os.File, part []byte) {
+	writer := bufio.NewWriter(file)
+	writer.Write(part)
+	writer.Flush()
+}
+func getPartBody(length int, conn net.Conn) ([]byte,int,int){
+	buf := make([]byte, length)
+
+	reader := bufio.NewReader(conn)
+
+	num, _ := reader.Read(buf)
+
+	fmt.Println("read num:", num)
+
+	remain := 0
+	//TODO recover
+	if remain = length - num; remain != 0{
+		fmt.Println("resize buf",remain)
+	}
+
+	return buf[:num],num,remain
 }
 func mergeFile() {
 	fmt.Println("merge ...")
@@ -85,16 +124,19 @@ func mergeFile() {
 
 	bufWrite := bufio.NewWriter(writer)
 
+	var totalSize int64 = 0
 	for _, v := range index {
 		//!important reset read pointer
 		v.Path.Seek(0,io.SeekStart)
 		reader := bufio.NewReader(v.Path)
-		io.Copy(bufWrite,reader)
+		written, _ := io.Copy(bufWrite, reader)
+		fmt.Println("merge size:",written)
+		totalSize += written
 		bufWrite.Flush()
-
 		v.Path.Close()
 	}
 
+	fmt.Println("totalSize:",totalSize)
 	fmt.Println("merge finash...")
 }
 func getFinalFile(h util.Head) *os.File{
@@ -108,34 +150,13 @@ func clean(){
 		fmt.Println(r)
 	}
 	fmt.Println("清理临时文件结束")
+	indexFile = nil
 }
 
-func writeBody(conn net.Conn,h *util.Head) {
-	var length = h.Length
-	var file = h.Path
 
-	part := getPartBody(length, conn)
-
-	file.Write(part)
-	file.Sync()
-}
-func getPartBody(length int, conn net.Conn) ([]byte){
-	buf := make([]byte, length)
-
-	num, _ := conn.Read(buf)
-
-	fmt.Println("read num:", num)
-
-	//TODO recover
-	if length != num{
-		panic("数据包异常")
-	}
-
-	return buf[:num]
-}
-func readHead(accept net.Conn) (h *util.Head, num int){
+func readHead(conn net.Conn) (h *util.Head, num int){
 	t := make([]byte,util.HeadSize)
-	n, e := accept.Read(t)
+	n, e := conn.Read(t)
 
 	if e != nil{
 		fmt.Println("read type err",e)
