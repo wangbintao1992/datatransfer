@@ -4,7 +4,7 @@ import (
 	"net"
 	"fmt"
 	"os"
-	"io/util"
+	"util"
 	"sort"
 	"bufio"
 	"io"
@@ -32,9 +32,6 @@ func main() {
 		clean()
 	}
 
-	//TODO md5 check
-	//TODO wait
-
 	fmt.Println("finash")
 }
 func handle(accept net.Conn) {
@@ -43,31 +40,34 @@ func handle(accept net.Conn) {
 
 	readPacket(accept)
 }
+
 //不同协程 并行读，所以每读一包，包含包头包体
 func readPacket(conn net.Conn) {
-
-	for {
-		fmt.Println("receiveing ...")
+	fmt.Println("start receive")
+	//TODO fix buf @link length
+	//TODO p
+	fmt.Println("receiveing ...")
+	for{
 		head, n := readHead(conn)
+
+		if n == 0{
+			break
+		}
 
 		once.Do(func() {
 			tmpPath = path.Join(p,"\\",head.Name + "tmp")
 			os.Mkdir(tmpPath,0666)
 		})
 
-		if n == 0{
-			break
-		}
-
 		//TODO index to large ?
 		addToIndex(head)
 
 		fmt.Println("body length",head.Length)
 
-		writeBody(conn, head)
+		readAndWriteBody(conn, head)
 	}
 }
-func writeBody(conn net.Conn,h *util.Head) {
+func readAndWriteBody(conn net.Conn,h *util.Head) {
 	var length = h.Length
 	var file = h.Path
 
@@ -94,14 +94,11 @@ func flushToDisk(file *os.File, part []byte) {
 func getPartBody(length int, conn net.Conn) ([]byte,int,int){
 	buf := make([]byte, length)
 
-	reader := bufio.NewReader(conn)
-
-	num, _ := reader.Read(buf)
+	num, _ := bufio.NewReader(conn).Read(buf)
 
 	fmt.Println("read num:", num)
 
 	remain := 0
-	//TODO recover
 	if remain = length - num; remain != 0{
 		fmt.Println("resize buf",remain)
 	}
@@ -153,9 +150,9 @@ func clean(){
 	indexFile = nil
 }
 
-
 func readHead(conn net.Conn) (h *util.Head, num int){
 	t := make([]byte,util.HeadSize)
+
 	n, e := conn.Read(t)
 
 	if e != nil{

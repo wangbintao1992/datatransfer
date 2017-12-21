@@ -6,7 +6,8 @@ import (
 	"time"
 	"os"
 	"flag"
-	"io/util"
+	"util"
+	"bufio"
 )
 
 var startTime time.Time
@@ -22,8 +23,7 @@ func main() {
 	//TODO pool
 	//TODO asych timeout
 	sendData(path, conn)
-
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 5)
 	conn.Close()
 }
 
@@ -32,7 +32,7 @@ func sendData(path string, conn net.Conn){
 	file, _ := os.Open(path)
 
 	//TODO blockSize?
-	blocks := getBlocks(path, 300000)
+	blocks := getBlocks(path, 30000)
 
 	startCalcTime()
 
@@ -47,7 +47,7 @@ func sendData(path string, conn net.Conn){
 }
 func writePacket(file *os.File, blocks []util.Block, i int, conn net.Conn) {
 	msg := getPacket(file, blocks[i])
-	n, e := conn.Write(msg)
+	n, e := bufio.NewWriter(conn).Write(msg)
 	if e != nil {
 		fmt.Println(e)
 	}
@@ -77,7 +77,6 @@ func getPacket(file *os.File,b util.Block) []byte{
 	}
 	head := getHead(b)
 
-	if head != nil{}
 	return mergePacket(head, buf[:n])
 }
 
