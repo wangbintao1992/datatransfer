@@ -6,6 +6,7 @@ import (
 	"net"
 	"compress/gzip"
 	"io/ioutil"
+	"os"
 )
 
 var(
@@ -54,4 +55,19 @@ func int32ToByte(l int32) []byte{
 	buffer := bytes.NewBuffer([]byte{})
 	binary.Write(buffer,binary.BigEndian,l)
 	return buffer.Bytes()
+}
+
+func GetRW(p string) *os.File{
+	file, _ := os.OpenFile(p, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	return file
+}
+func PathExists(path string)bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }

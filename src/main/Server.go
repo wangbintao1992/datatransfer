@@ -12,9 +12,22 @@ import (
 	"path"
 )
 var p = "D://tmp"
-var indexFile = make(map[string]util.Head,10)
+var indexCahce *util.IndexCache
 var once sync.Once
 var tmpPath string
+
+func init()  {
+	fmt.Println("初始化...")
+	//indexPath := path.Join(p,"index.log")
+	//file, _ := os.OpenFile(indexPath,os.O_CREATE | os.O_RDWR|os.O_APPEND, 0666)
+	//
+	//loadToCache(file)
+	indexCahce = util.Init(path.Join(p,"index.log"))
+}
+func loadToCache(file *os.File) {
+	
+}
+
 func main() {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", "localhost:8080")
 
@@ -30,9 +43,17 @@ func main() {
 		mergeFile()
 
 		clean()
+
+		saveCache()
 	}
 
 	fmt.Println("finash")
+}
+func isContinuTransferr() bool{
+	return false
+}
+func saveCache() {
+	indexCahce.SaveCache()
 }
 func handle(accept net.Conn) {
 
@@ -87,6 +108,7 @@ func readAndWriteBody(conn net.Conn,h *util.Head) {
 	go flushToDisk(file, tmpBuf)
 }
 func flushToDisk(file *os.File, part []byte) {
+	//TODO bufio write 写 0字节
 	writer := bufio.NewWriter(file)
 	writer.Write(part)
 	writer.Flush()
@@ -106,12 +128,15 @@ func getPartBody(length int, conn net.Conn) ([]byte,int,int){
 	return buf[:num],num,remain
 }
 func mergeFile() {
-	fmt.Println("merge ...")
-	index := make([]util.Head,0)
-	for k,v := range indexFile {
-		fmt.Println("merge index:",k," file order：",v.Order)
-		index = append(index, v)
+	if indexCahce.CheckMerge(){
+		fmt.Println("数据包缺失")
+		fmt.Println("缺失:")
+		return
 	}
+
+	fmt.Println("merge ...")
+
+	index := indexCahce.GetCache()
 
 	sort.Sort(util.HeadIndex(index))
 
@@ -136,9 +161,11 @@ func mergeFile() {
 	fmt.Println("totalSize:",totalSize)
 	fmt.Println("merge finash...")
 }
+func checkMerge() {
+
+}
 func getFinalFile(h util.Head) *os.File{
-	f, _ := os.OpenFile(h.GetFilePath(p), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	return f
+	return util.GetRW(h.GetFilePath(p))
 }
 func clean(){
 	fmt.Println("清理临时文件")
@@ -147,7 +174,6 @@ func clean(){
 		fmt.Println(r)
 	}
 	fmt.Println("清理临时文件结束")
-	indexFile = nil
 }
 
 func readHead(conn net.Conn) (h *util.Head, num int){
@@ -165,13 +191,11 @@ func readHead(conn net.Conn) (h *util.Head, num int){
 }
 func addToIndex(head *util.Head){
 
-	if h ,ok:= indexFile[head.Hash]; ok{
-		//TODO continuingly-transferring
+	if h ,ok:= indexCahce.Get(head.Hash); ok{
 		fmt.Println("重复读 err")
 		head.Path = h.Path
 	} else {
-		file, _ := os.OpenFile(head.GetTmpFilePath(p),os.O_CREATE | os.O_RDWR|os.O_APPEND, 0666)
-		head.Path = file
-		indexFile[head.Hash] = *head
+		head.Path = util.GetRW(head.GetTmpFilePath(p))
+		indexCahce.Put(head.Hash,*head)
 	}
 }

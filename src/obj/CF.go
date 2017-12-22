@@ -1,44 +1,28 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"net"
-	"sync"
-	"time"
+	"os"
 )
 
 func main() {
+	a := &A{Name: "jack"}
 
-	var cdl sync.WaitGroup
-
-
-	go t(cdl)
-	go t(cdl)
-	go t(cdl)
-	go t(cdl)
-
-	cdl.Wait()
-	fmt.Println("asd")
+	a.setName("rose")
+	os.OpenFile("D://test.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 }
-func t(group sync.WaitGroup) {
-	group.Add(1)
-	time.Sleep(2000)
-	fmt.Println("zzz")
-	group.Done()
+
+func (a *A) setName(s string){
+	a.Name = s
+	fmt.Println(a.Name)
 }
 
 
-
-func readPart(offset int64, file *os.File,conn net.Conn) {
-	fmt.Println("=========")
-	buf := make([]byte, 100)
-	file.ReadAt(buf, offset)
-
-	//conn.Write(buf)
-	fmt.Println(string(buf),"===")
+func (a A) setName2(s string){
+	a.Name = s
+	fmt.Println(a.Name)
 }
 
-type Head struct {
-	*os.File
+type A struct {
+	Name string
 }
