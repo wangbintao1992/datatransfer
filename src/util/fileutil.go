@@ -1,7 +1,7 @@
 package util
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path"
 )
@@ -11,23 +11,23 @@ func GetFileName(p string) string{
 }
 
 func GetBlockArr(path string,blockSize int64) []Block{
-	fmt.Println("分块大小byte:",blockSize)
-	fmt.Println("源文件路径:" + path)
+	log.Println("分块大小byte:",blockSize)
+	log.Println("源文件路径:" + path)
 
 	fileName := GetFileName(path)
-	fmt.Println("文件名:" + fileName)
+	log.Println("文件名:" + fileName)
 	info, e := os.Stat(path)
 
 	if e != nil{
 		panic(e)
 	}
 	size := info.Size()
-	fmt.Println("源文件大小:",size," unit:byte")
+	log.Println("源文件大小:",size," unit:byte")
 
 	blockNum, remain := divFile(size, path, blockSize)
 
-	fmt.Println("分块:",blockNum)
-	fmt.Println("剩余:",remain)
+	log.Println("分块:",blockNum)
+	log.Println("剩余:",remain)
 
 	blocks := make([]Block, blockNum + 1)
 	//TODO int ?
@@ -39,7 +39,7 @@ func GetBlockArr(path string,blockSize int64) []Block{
 		order ++
 	}
 
-	fmt.Println(cap(blocks))
+	log.Println(cap(blocks))
 	blocks[blockNum] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order,Name:fileName}
 
 	return blocks

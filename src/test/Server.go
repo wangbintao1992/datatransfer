@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"io"
 	"os"
@@ -10,9 +10,9 @@ import (
 )
 
 func main()  {
-	fmt.Println("server start")
+	log.Println("server start")
 	listener, e := net.Listen("tcp", "localhost:8080")
-	fmt.Println(e)
+	log.Println(e)
 	path := "D:\\tmp\\"
 
 
@@ -21,15 +21,15 @@ func main()  {
 	for{
 		index ++
 		accept, i := listener.Accept()
-		fmt.Println(i)
+		log.Println(i)
 
 		file, e3 := os.OpenFile(path+"t"+strconv.Itoa(index)+".data", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-		fmt.Println(e3)
+		log.Println(e3)
 		for{
 			n, err := accept.Read(bytes)
-			fmt.Println(n)
-			fmt.Println(err)
-			fmt.Println(string(bytes))
+			log.Println(n)
+			log.Println(err)
+			log.Println(string(bytes))
 			bytes2.TrimSpace(bytes)
 			file.Write(bytes)
 

@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"io/ioutil"
 	"os"
+	"github.com/astaxie/beego/logs"
 )
 
 var(
@@ -36,11 +37,11 @@ func GetSpace(space int) []byte{
 	return t
 }
 //TODO buf size
-func SetTCPOption(conn net.Conn) {
+func SetTCPOption(conn net.Conn,blockSize int) {
 	tcpConn := conn.(*net.TCPConn)
 	tcpConn.SetNoDelay(false)
-	tcpConn.SetWriteBuffer(30000)
-	tcpConn.SetReadBuffer(30000)
+	tcpConn.SetWriteBuffer(blockSize)
+	tcpConn.SetReadBuffer(blockSize)
 }
 
 func ByteToInt32(d []byte) int32{
@@ -70,4 +71,10 @@ func PathExists(path string)bool {
 		return false
 	}
 	return false
+}
+
+func CheckErr(e error){
+	if e != nil{
+		logs.Error(e)
+	}
 }

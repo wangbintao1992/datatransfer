@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"io"
 	"os"
 	"strconv"
@@ -18,7 +18,7 @@ func main() {
 	file, err := os.Open(in)
 
 	if err != nil {
-		fmt.Print(err)
+		log.Print(err)
 	}
 
 	read := bufio.NewReader(file)
@@ -58,7 +58,7 @@ func main() {
 
 			} else {
 				if strings.Contains(tmp, "File Name") {
-					fmt.Println(tmp)
+					log.Println(tmp)
 					index := strings.Index(tmp, ":")
 					o.fileName = tmp[index+1:]
 				}

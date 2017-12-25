@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 	"encoding/json"
-	"fmt"
+	"log"
 	"path"
 	"os"
 )
@@ -19,10 +19,10 @@ func EncodeHead(b Block) []byte{
 	marshal, e := json.Marshal(head)
 
 	if e != nil{
-		fmt.Println(e)
+		log.Println(e)
 	}
 
-	fmt.Println("head json",string(marshal),"offset",b.Offset)
+	log.Println("head json",string(marshal),"offset",b.Offset)
 
 	if space := HeadSize - len(marshal); space > 0{
 		marshal = append(marshal,GetSpace(space)...)
@@ -36,11 +36,11 @@ func DecodeHead(data []byte) *Head{
 
 	right := bytes.TrimRight(data, "\x00")
 
-	fmt.Println("head json",string(right))
+	log.Println("head json",string(right))
 	e2 := json.Unmarshal(right, &i)
 
 	if e2 != nil{
-		fmt.Println(e2)
+		log.Println(e2)
 	}
 	return i
 }

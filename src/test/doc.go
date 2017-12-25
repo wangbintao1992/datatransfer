@@ -5,7 +5,7 @@ test document
 */
 package main
 
-import "fmt"
+import "log"
 
 func main()  {
 	}

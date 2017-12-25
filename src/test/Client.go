@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"flag"
 	"os"
 	"strconv"
@@ -10,13 +10,13 @@ import (
 )
 
 func main() {
-	fmt.Println("client start")
+	log.Println("client start")
 	flag.Parse()
 	path := os.Args[1]
 	packet := os.Args[2]
 
-	fmt.Println("分块大小byte:" + packet)
-	fmt.Println("源文件路径:" + path)
+	log.Println("分块大小byte:" + packet)
+	log.Println("源文件路径:" + path)
 
 	info, e := os.Stat(path)
 
@@ -24,13 +24,13 @@ func main() {
 		panic(e)
 	}
 	size := info.Size()
-	fmt.Println("源文件大小:" + strconv.FormatInt(size,10) + " unit:byte")
+	log.Println("源文件大小:" + strconv.FormatInt(size,10) + " unit:byte")
 
 	packet2, _ := strconv.ParseInt(packet, 10, 64)
 	blockNum, remain := divFile(size, path, packet2)
 
-	fmt.Println("分块:" + strconv.FormatInt(blockNum,10))
-	fmt.Println("剩余:" + strconv.FormatInt(remain,10))
+	log.Println("分块:" + strconv.FormatInt(blockNum,10))
+	log.Println("剩余:" + strconv.FormatInt(remain,10))
 
 	var blockNum2 = int(blockNum)
 	var remain2 = int(remain)
@@ -46,22 +46,22 @@ func main() {
 	}
 }
 func sendData(packet *Packet,path string,packetSize int) {
-	fmt.Println("分块读开始")
+	log.Println("分块读开始")
 	file, e := os.Open(path)
-	fmt.Println(e)
+	log.Println(e)
 
 	buf := make([]byte, packetSize)
 	file.Read(buf)
 
 	packet.data = buf
 	conn, e := net.Dial("tcp", "localhost:8080")
-	fmt.Println(e)
+	log.Println(e)
 
 	marshal, i := json.Marshal(packet)
-	fmt.Println(marshal)
-	fmt.Println(i)
+	log.Println(marshal)
+	log.Println(i)
 	conn.Write(buf)
-	fmt.Println("分块写结束")
+	log.Println("分块写结束")
 }
 
 func divFile(size int64,path string,packet int64)  (int64,int64){
