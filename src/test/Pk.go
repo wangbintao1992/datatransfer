@@ -1,7 +1,11 @@
 package main
 
-type Packet2 struct {
-	Offset int
-	length int
-	data []byte
+import (
+	"fmt"
+	"path"
+)
+
+func main()  {
+	dir := path.Dir("D://go2.pdf")
+	fmt.Println(dir)
 }

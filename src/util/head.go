@@ -9,6 +9,15 @@ import (
 	"os"
 )
 
+type Head struct {
+	Order int
+	Length int
+	Hash string
+	Name string
+	Path *os.File
+	md5 string
+}
+
 func EncodeHead(b Block) []byte{
 	head := &Head{
 		Order:  b.Order,
@@ -60,13 +69,7 @@ func (this *Head) GetTmpFilePath(s string) string{
 	return path.Join(s,this.Name + "tmp",buffer.String())
 }
 
-type Head struct {
-	Order int
-	Length int
-	Hash string
-	Name string
-	Path *os.File
-}
+
 
 type HeadIndex []Head
 

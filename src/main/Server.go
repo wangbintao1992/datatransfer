@@ -11,6 +11,7 @@ import (
 /*1. server恢复重连任务
 2. client查询重连数据
 3. server接受续传
+4. merge失败，重新传输
 */
 //TODO 并发传输
 func main() {

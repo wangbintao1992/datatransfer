@@ -8,12 +8,13 @@ import (
 	"io/ioutil"
 	"os"
 	"github.com/astaxie/beego/logs"
+	"crypto/sha1"
+	"fmt"
+	"crypto/md5"
+	"io"
 )
-
-var(
-	HeadSize  = 150
-)
-
+//TODO hard code
+var HeadSize = 150
 func GzipEncode(data []byte) []byte{
 	buf := bytes.Buffer{}
 	writer := gzip.NewWriter(&buf)
@@ -59,7 +60,8 @@ func int32ToByte(l int32) []byte{
 }
 
 func GetRW(p string) *os.File{
-	file, _ := os.OpenFile(p, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	file, e := os.OpenFile(p, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	CheckErr(e)
 	return file
 }
 func PathExists(path string)bool {
@@ -77,4 +79,18 @@ func CheckErr(e error){
 	if e != nil{
 		logs.Error(e)
 	}
+}
+
+func GetHash(data []byte) string{
+	t := sha1.New()
+	t.Write(data)
+	return fmt.Sprintf("%x",(t.Sum(nil)))
+}
+
+func GetFileMD5(f *os.File)string{
+	h := md5.New()
+
+	_, err := io.Copy(h, f)
+	CheckErr(err)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

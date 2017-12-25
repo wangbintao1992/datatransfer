@@ -7,11 +7,29 @@ import (
 	"os"
 	"util"
 	"bufio"
+	"path"
 )
 
 var startTime time.Time
+type Sender struct {
+	InputPath string
+	BlockSize int
+	MD5 string
+	Root string
+}
+func NewSender(s string,blockSize int) *Sender{
+	file, e := os.Open(s)
+	util.CheckErr(e)
+	sender := &Sender{InputPath: s, BlockSize: blockSize,MD5:util.GetFileMD5(file),Root:path.Dir(s)}
 
+	return sender
+}
 func (this *Sender) Send() {
+
+	if(!this.checkComplete()) {
+		//TOOD 查询报文
+		QueryAbsentBlockClient(this.MD5)
+	}
 
 	conn, _ := net.Dial("tcp", "localhost:8080")
 
@@ -19,16 +37,35 @@ func (this *Sender) Send() {
 
 	//TODO pool
 	//TODO asych timeout
-	this.sendData(conn)
 
+
+	this.sendData(conn)
 }
-type Sender struct {
-	InputPath string
-	BlockSize int
+func (this *Sender) checkComplete() bool{
+	return CheckComlete0(this.InputPath,this.MD5)
 }
 
 func (this *Sender)sendData(conn net.Conn){
 	file, _ := os.Open(this.InputPath)
+	this.setStatus(false)
+
+	this.sendData_0(file,conn)
+
+	this.setStatus(true)
+}
+func (this *Sender) setStatus(b bool) {
+	sf := path.Join(this.Root, this.MD5)
+	log.Println(sf)
+	if b{
+		os.Remove(sf)
+	} else {
+		rw := util.GetRW(sf)
+		rw.WriteString(this.MD5)
+		rw.Sync()
+		defer rw.Close()
+	}
+}
+func (this *Sender)sendData_0(file *os.File,conn net.Conn){
 
 	blocks := this.getBlocks(this.InputPath, int64(this.BlockSize))
 
