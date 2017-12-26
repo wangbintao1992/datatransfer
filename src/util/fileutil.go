@@ -35,12 +35,12 @@ func GetBlockArr(path string,blockSize int64) []Block{
 	bs := int(blockSize)
 	order := 0
 	for i := 0; i < blockNum2; i ++{
-		blocks[i] = *&Block{Offset:  i * bs,Blength: bs,Order:order,Name:fileName}
+		blocks[i] = *&Block{Offset:  i * bs,Blength: bs,Order:order,Name:fileName,Max:int(blockNum)}
 		order ++
 	}
 
 	log.Println(cap(blocks))
-	blocks[blockNum] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order,Name:fileName}
+	blocks[blockNum] = *&Block{Offset: blockNum2 * int(blockSize),Blength:int(remain),Order:order,Name:fileName,Max:int(blockNum)}
 
 	return blocks
 }

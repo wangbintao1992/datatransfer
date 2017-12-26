@@ -6,6 +6,9 @@ import (
 	"flag"
 	"receive"
 	"gvar"
+	"util"
+	"path"
+	"cache"
 )
 /*1. server恢复重连任务
 2. client查询重连数据
@@ -29,9 +32,16 @@ func main() {
 	}
 }
 
-func queryAbsentBlock(w http.ResponseWriter, req *http.Request){
+func queryAbsentBlock(r http.ResponseWriter, req *http.Request){
 	req.ParseForm()
 	md5 := req.Form.Get("md5")
 	log.Println("收到md5:",md5)
 
+	result := new(util.Result)
+	if util.PathExists(path.Join(gvar.RtPath,md5)){
+		result.Flag = true
+		cache.GetCache()
+	} else {
+		result.Flag = false
+	}
 }

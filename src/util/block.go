@@ -10,6 +10,7 @@ type Block struct {
 	Blength int
 	Order   int
 	Name string
+	Max int
 }
 
 func (this *Block) GetHash() string{

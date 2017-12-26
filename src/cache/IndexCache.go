@@ -28,6 +28,24 @@ func Init(path string){
 func GetCache() *IndexCache{
 	return cache
 }
+func GetAbsentBlock() []string{
+	/*heads := GetCache().index
+
+	bitset := make([]bool, 0)
+	max := 0
+	for _,v := range heads{
+		max = v.Max
+		bitset[v.Order] = true
+	}
+
+	r := make([]int, 0)
+	for k,v := range bitset{
+		if !v{
+			r = append(r, k)
+		}
+	}*/
+	return nil
+}
 func (i *IndexCache)loadToMermory(path string) {
 	if util.PathExists(path) {
 		r := bufio.NewReader(util.GetR(path))
@@ -84,4 +102,6 @@ func (i *IndexCache) GetCache() []util.Head{
 func (i *IndexCache) Close() {
 	i.file.Close()
 }
+
+
 
