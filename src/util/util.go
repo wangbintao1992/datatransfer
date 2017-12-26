@@ -7,14 +7,14 @@ import (
 	"compress/gzip"
 	"io/ioutil"
 	"os"
-	"github.com/astaxie/beego/logs"
 	"crypto/sha1"
 	"fmt"
 	"crypto/md5"
 	"io"
+	"log"
 )
 //TODO hard code
-var HeadSize = 150
+
 func GzipEncode(data []byte) []byte{
 	buf := bytes.Buffer{}
 	writer := gzip.NewWriter(&buf)
@@ -64,6 +64,14 @@ func GetRW(p string) *os.File{
 	CheckErr(e)
 	return file
 }
+func GetR(p string) (*os.File){
+	file, e := os.Open(p)
+	CheckErr(e)
+	return file
+}
+func GetRWithE(p string) (*os.File,error){
+	return os.Open(p)
+}
 func PathExists(path string)bool {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -77,7 +85,7 @@ func PathExists(path string)bool {
 
 func CheckErr(e error){
 	if e != nil{
-		logs.Error(e)
+		log.Fatalln(e)
 	}
 }
 

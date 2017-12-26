@@ -11,18 +11,13 @@ import (
 	"sync"
 	"path"
 	"cache"
+	"gvar"
 )
 type Receiver struct {
 	RtPath string
 	TmpPath string
 	indexCache *cache.IndexCache
 	once sync.Once
-}
-func (this *Receiver)InitParam(rtPath string,tmpPath string,cache *cache.IndexCache)  {
-	log.Println("参数初始化...")
-	this.RtPath = rtPath
-	this.TmpPath = tmpPath
-	this.indexCache = cache
 }
 
 func (this *Receiver)Start() {
@@ -65,11 +60,6 @@ func (this *Receiver)readPacket(conn net.Conn) {
 		if n == 0{
 			break
 		}
-
-		this.once.Do(func() {
-			this.TmpPath = path.Join(this.RtPath,"\\",head.Name + this.TmpPath)
-			os.Mkdir(this.TmpPath,0666)
-		})
 
 		//TODO asyn?
 		this.addToIndex(head)
@@ -173,7 +163,7 @@ func (this *Receiver)clean(){
 }
 
 func (this *Receiver)readHead(conn net.Conn) (h *util.Head, num int){
-	t := make([]byte,util.HeadSize)
+	t := make([]byte,gvar.HeadSize)
 
 	n, e := conn.Read(t)
 
@@ -186,6 +176,13 @@ func (this *Receiver)readHead(conn net.Conn) (h *util.Head, num int){
 }
 //TODO 先考虑断线，不考虑半途中断
 func (this *Receiver)addToIndex(head *util.Head){
+	this.once.Do(func() {
+		this.TmpPath = path.Join(this.RtPath,"\\",head.Name + this.TmpPath)
+		os.Mkdir(this.TmpPath,0666)
+
+		cache.Init(path.Join(this.RtPath, head.MD5))
+		this.indexCache = cache.GetCache()
+	})
 
 	if h ,ok:= this.indexCache.Get(head.Hash); ok{
 		log.Println("重复读 err")

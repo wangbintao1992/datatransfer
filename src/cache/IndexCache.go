@@ -8,27 +8,29 @@ import (
 	"os"
 	"bytes"
 	"util"
+	"path"
+	"gvar"
 )
-
+var cache *IndexCache
 type IndexCache struct {
 	index map[string]util.Head
 	file *os.File
 }
 
-func Init(path string) *IndexCache {
+func Init(path string){
 	//TODO 断点续传
 	log.Println("cache 初始化")
-	cache := &IndexCache{
+	cache = &IndexCache{
 		index: make(map[string]util.Head, 0)}
 
 	cache.loadToMermory(path)
-
+}
+func GetCache() *IndexCache{
 	return cache
 }
 func (i *IndexCache)loadToMermory(path string) {
-	i.file = util.GetRW(path)
 	if util.PathExists(path) {
-		r := bufio.NewReader(i.file)
+		r := bufio.NewReader(util.GetR(path))
 		for {
 			line, _, err := r.ReadLine()
 
@@ -45,6 +47,9 @@ func (i *IndexCache)loadToMermory(path string) {
 	}
 }
 func (i *IndexCache) SaveCache(h *util.Head){
+	if i.file == nil{
+		i.file = util.GetRW(path.Join(gvar.RtPath, h.MD5))
+	}
 	writer := bufio.NewWriter(i.file)
 	data, _ := json.Marshal(h)
 	writer.Write(data)

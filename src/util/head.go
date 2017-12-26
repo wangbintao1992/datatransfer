@@ -7,6 +7,7 @@ import (
 	"log"
 	"path"
 	"os"
+	"gvar"
 )
 
 type Head struct {
@@ -15,15 +16,17 @@ type Head struct {
 	Hash string
 	Name string
 	Path *os.File
-	md5 string
+	MD5 string
+	Max int
 }
 
-func EncodeHead(b Block) []byte{
+func EncodeHead(b Block,md5 string) []byte{
 	head := &Head{
 		Order:  b.Order,
 		Length: b.Blength,
 		Name:   b.Name,
-		Hash:   b.GetHash()}
+		Hash:   b.GetHash(),
+		MD5:md5}
 
 	marshal, e := json.Marshal(head)
 
@@ -33,7 +36,7 @@ func EncodeHead(b Block) []byte{
 
 	log.Println("head json",string(marshal),"offset",b.Offset)
 
-	if space := HeadSize - len(marshal); space > 0{
+	if space := gvar.HeadSize - len(marshal); space > 0{
 		marshal = append(marshal,GetSpace(space)...)
 	}
 

@@ -5,8 +5,7 @@ import (
 	"log"
 	"flag"
 	"receive"
-	"cache"
-	"path"
+	"gvar"
 )
 /*1. server恢复重连任务
 2. client查询重连数据
@@ -15,13 +14,11 @@ import (
 */
 //TODO 并发传输
 func main() {
-	rtPath := flag.String("rtpath", "D://tmp", "root path")
-	tmpPath := flag.String("tmppath", "tmp", "tmp path")
+	gvar.RtPath  = *flag.String("rtpath", "D://tmp", "root path")
+	gvar.TmpPath = *flag.String("tmppath", "tmp", "tmp path")
 
-	cache := cache.Init(path.Join(*rtPath, "index.log"))
-	r := new(receive.Receiver)
-	r.InitParam(*rtPath,*tmpPath,cache)
-
+	r := &receive.Receiver{RtPath:gvar.RtPath,TmpPath:gvar.TmpPath}
+	log.Println("service start")
 	go r.Start()
 
 	http.HandleFunc("/qab", queryAbsentBlock)
@@ -30,10 +27,11 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-
-
-	log.Println("服务启动")
 }
 
 func queryAbsentBlock(w http.ResponseWriter, req *http.Request){
+	req.ParseForm()
+	md5 := req.Form.Get("md5")
+	log.Println("收到md5:",md5)
+
 }

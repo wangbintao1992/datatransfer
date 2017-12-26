@@ -26,11 +26,11 @@ func NewSender(s string,blockSize int) *Sender{
 }
 func (this *Sender) Send() {
 
-	if(!this.checkComplete()) {
+	/*if(!this.checkComplete()) {
 		//TOOD 查询报文
 		QueryAbsentBlockClient(this.MD5)
 	}
-
+*/
 	conn, _ := net.Dial("tcp", "localhost:8080")
 
 	util.SetTCPOption(conn,this.BlockSize)
@@ -47,6 +47,7 @@ func (this *Sender) checkComplete() bool{
 
 func (this *Sender)sendData(conn net.Conn){
 	file, _ := os.Open(this.InputPath)
+	//TODO asyc?
 	this.setStatus(false)
 
 	this.sendData_0(file,conn)
@@ -110,7 +111,7 @@ func (this *Sender)getPacket(file *os.File,b util.Block) []byte{
 	if e != nil{
 		log.Println(e)
 	}
-	head := this.getHead(b)
+	head := this.getHead(b,this.MD5)
 
 	return this.mergePacket(head, buf[:n])
 }
@@ -118,8 +119,8 @@ func (this *Sender)getPacket(file *os.File,b util.Block) []byte{
 func (this *Sender)readFile(file *os.File,buf []byte,block util.Block)(int,error) {
 	return file.ReadAt(buf,int64(block.Offset))
 }
-func (this *Sender)getHead(b util.Block) []byte {
-	return util.EncodeHead(b)
+func (this *Sender)getHead(b util.Block,md5 string) []byte {
+	return util.EncodeHead(b,md5)
 }
 func (this *Sender)mergePacket(head []byte, body []byte) []byte{
 	return append(head, body...)
